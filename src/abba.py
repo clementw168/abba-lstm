@@ -143,19 +143,21 @@ class ABBA:
 
         return labels, centers, centers[labels]
 
-    def stringify_representation(self, labels: np.ndarray, centers: np.ndarray) -> str:
-        start_letter = ord("a")
-        self.language = {
-            chr(start_letter + label): center for label, center in enumerate(centers)
-        }
+    def classify_into_clusters(self, linear_pieces: np.ndarray) -> np.ndarray:
+        centers = np.array(list(self.language.values()))
+        distances = np.linalg.norm(linear_pieces[:, np.newaxis, :] - centers, axis=2)
+        labels = np.argmin(distances, axis=1)
 
-        string = [chr(start_letter + label) for label in labels]
+        return labels
+
+    def stringify_representation(self, labels: np.ndarray) -> str:
+        string = [chr(ord("a") + label) for label in labels]
         string = "".join(string)
 
         return string
 
-    def reverse_digitalization(self, string: str) -> np.ndarray:
-        return np.array([self.language[letter] for letter in string])
+    def reverse_digitalization(self, centroid_sequence: np.ndarray) -> np.ndarray:
+        return np.array([self.language[centroid] for centroid in centroid_sequence])
 
     def quantize(self, linear_pieces: np.ndarray) -> np.ndarray:
         linear_pieces = np.copy(linear_pieces)
@@ -173,15 +175,33 @@ class ABBA:
 
         return linear_pieces
 
-    def apply_transform(self, time_series: np.ndarray) -> str:
-        time_series = self.standardize(time_series)
-        linear_pieces = self.get_linear_pieces(time_series)
-        labels, centers, _ = self.cluster_pieces(linear_pieces)
+    def learn_transform(
+        self, standardized_time_series: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        linear_pieces = self.get_linear_pieces(standardized_time_series)
+        labels, centers, centroid_sequence = self.cluster_pieces(linear_pieces)
 
-        return self.stringify_representation(labels, centers)
+        self.language = dict(enumerate(centers))
 
-    def apply_inverse_transform(self, string: str) -> np.ndarray:
-        linear_approx = self.reverse_digitalization(string)
+        return labels, centers, centroid_sequence
+
+    def apply_transform(self, standardized_time_series: np.ndarray) -> np.ndarray:
+        linear_pieces = self.get_linear_pieces(standardized_time_series)
+
+        return self.classify_into_clusters(linear_pieces)
+
+    def apply_transform_to_str(self, time_series: np.ndarray) -> str:
+        centroid_sequence = self.apply_transform(time_series)
+
+        return self.stringify_representation(centroid_sequence)
+
+    def apply_inverse_transform(self, centroid_sequence: np.ndarray) -> np.ndarray:
+        linear_approx = self.reverse_digitalization(centroid_sequence)
         linear_approx = self.quantize(linear_approx)
 
         return self.unfold_linear_pieces(linear_approx)
+
+    def apply_inverse_transform_from_str(self, string: str) -> np.ndarray:
+        centroid_sequence = np.array([ord(char) - ord("a") for char in string])
+
+        return self.apply_inverse_transform(centroid_sequence)
