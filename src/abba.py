@@ -157,6 +157,22 @@ class ABBA:
     def reverse_digitalization(self, string: str) -> np.ndarray:
         return np.array([self.language[letter] for letter in string])
 
+    def quantize(self, linear_pieces: np.ndarray) -> np.ndarray:
+        linear_pieces = np.copy(linear_pieces)
+
+        error = linear_pieces[0, 0] - np.round(linear_pieces[0, 0])
+        linear_pieces[0, 0] = np.round(linear_pieces[0, 0])
+
+        if len(linear_pieces) == 1:
+            return linear_pieces
+
+        for i in range(1, len(linear_pieces)):
+            linear_pieces[i, 0] += error
+            error = linear_pieces[i, 0] - np.round(linear_pieces[i, 0])
+            linear_pieces[i, 0] = np.round(linear_pieces[i, 0])
+
+        return linear_pieces
+
     def apply_transform(self, time_series: np.ndarray) -> str:
         time_series = self.standardize(time_series)
         linear_pieces = self.get_linear_pieces(time_series)
@@ -166,5 +182,6 @@ class ABBA:
 
     def apply_inverse_transform(self, string: str) -> np.ndarray:
         linear_approx = self.reverse_digitalization(string)
+        linear_approx = self.quantize(linear_approx)
 
         return self.unfold_linear_pieces(linear_approx)
