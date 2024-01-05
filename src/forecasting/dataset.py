@@ -10,7 +10,7 @@ class ForecastingDataset(Dataset):
         if data.dtype == np.int64:
             self.data = torch.tensor(data, dtype=torch.long)
         else:
-            self.data = torch.tensor(data)
+            self.data = torch.tensor(data, dtype=torch.float32)
         self.sequence_length = sequence_length
 
     def __len__(self):
@@ -30,6 +30,7 @@ def get_datasets_and_loaders(
     abba: ABBA | None = None,
     batch_size: int = 64,
     num_workers: int = 0,
+    verbose: bool = True,
 ) -> tuple[np.ndarray, np.ndarray, DataLoader, DataLoader]:
     raw_train_data = standardized_time_series[
         : -int(len(standardized_time_series) * test_split_ratio)
@@ -37,15 +38,19 @@ def get_datasets_and_loaders(
     raw_test_data = standardized_time_series[
         -int(len(standardized_time_series) * test_split_ratio) :
     ]
-    # Add the last sequence_length elements of the training data to the beginning of the test data
     train_data = raw_train_data
     test_data = raw_test_data
 
     if abba is not None:
-        abba.learn_transform(train_data)
+        _, _, centroid_sequence = abba.learn_transform(train_data)
         train_data = abba.apply_transform(train_data)
         test_data = abba.apply_transform(test_data)
+        if verbose:
+            print(
+                "Average time series length per symbol:", centroid_sequence[:, 0].mean()
+            )
 
+    # Add the last sequence_length elements of the training data to the beginning of the test data
     test_data = np.concatenate((train_data[-sequence_length:], test_data), axis=0)
 
     train_dataset = ForecastingDataset(train_data, sequence_length)
