@@ -18,5 +18,10 @@ To install the project:
 make install
 ```
 
-### If you want to install it package by package make sure to install dtw by using the command
-'''python -m pip install dtw'''
+## Usage
+
+There are two notebooks:
+- `toy_dataset.ipynb`: This notebook shows how to use the ABBA representation and how to train a LSTM model on top of it. It uses a toy dataset which is a simple sine wave.
+- `main.ipynb`: This notebook evaluates the ABBA representation and the LSTM model the sunspot dataset.
+
+A report of the project is available at the root of the repository: `report.pdf`.
