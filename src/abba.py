@@ -18,7 +18,7 @@ class ABBA:
         self.increment_scale = increment_scale
 
     def standardize(self, time_series: np.ndarray) -> np.ndarray:
-        return (time_series - np.mean(time_series)) / np.std(time_series)
+        return (time_series - time_series[0]) / np.std(time_series)
 
     def get_linear_pieces(self, time_series: np.ndarray) -> np.ndarray:
         current_start = 0

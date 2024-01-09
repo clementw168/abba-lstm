@@ -17,3 +17,6 @@ To install the project:
 ```bash
 make install
 ```
+
+### If you want to install it package by package make sure to install dtw by using the command
+'''python -m pip install dtw'''
